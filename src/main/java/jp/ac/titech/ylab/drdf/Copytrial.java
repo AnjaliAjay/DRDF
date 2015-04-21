@@ -82,7 +82,7 @@ public class Copytrial {
     executor.shutdown();
     
   }
-  public Runnable createDBReader(String sql, final CopyManager cm, final Writer writer) {
+  public Runnable createDBReader(final String sql, final CopyManager cm, final Writer writer) {
     return new Runnable() {
 
       @Override
@@ -104,7 +104,7 @@ public class Copytrial {
     
   }
   
-    public Runnable createDBWriter(String tableName, final CopyManager cm, final Reader reader) {
+    public Runnable createDBWriter(final String tableName, final CopyManager cm, final Reader reader) {
       return new Runnable() {
 
         @Override

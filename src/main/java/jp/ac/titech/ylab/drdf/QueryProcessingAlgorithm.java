@@ -239,7 +239,7 @@ public class QueryProcessingAlgorithm {
                     if(subjecttemp.equals(Projection.get(x))){
                         
                         if(ProjVariable.containsKey(subjecttemp)){
-                        ProjVariable.replace(subjecttemp,"T"+i+".subject");
+                        ProjVariable.put(subjecttemp,"T"+i+".subject");
                         }
                         else
                             ProjVariable.put(subjecttemp,"T"+i+".subject");
@@ -248,7 +248,7 @@ public class QueryProcessingAlgorithm {
                     if(predicatetemp.equals(Projection.get(x))){
                         
                         if(ProjVariable.containsKey(predicatetemp)){
-                        ProjVariable.replace(predicatetemp,"T"+i+".predicate");
+                        ProjVariable.put(predicatetemp,"T"+i+".predicate");
                         }
                         else
                             ProjVariable.put(predicatetemp,"T"+i+".predicate");
@@ -257,7 +257,7 @@ public class QueryProcessingAlgorithm {
                     if(objecttemp.equals(Projection.get(x))){
     
                         if(ProjVariable.containsKey(objecttemp)){
-                            ProjVariable.replace(objecttemp,"T"+i+".object");
+                            ProjVariable.put(objecttemp,"T"+i+".object");
                         }
                         else
                             ProjVariable.put(objecttemp,"T"+i+".object");
@@ -319,7 +319,7 @@ public class QueryProcessingAlgorithm {
                     if(subjecttemp.equals(Projection.get(x))){
                     
                         if(ProjVariable.containsKey(subjecttemp)){
-                        ProjVariable.replace(subjecttemp,"T"+i+".subject");
+                        ProjVariable.put(subjecttemp,"T"+i+".subject");
                         }
                         else
                             ProjVariable.put(subjecttemp,"T"+i+".subject");
@@ -328,7 +328,7 @@ public class QueryProcessingAlgorithm {
                     if(predicatetemp.equals(Projection.get(x))){
                         
                         if(ProjVariable.containsKey(predicatetemp)){
-                        ProjVariable.replace(predicatetemp,"T"+i+".predicate");
+                        ProjVariable.put(predicatetemp,"T"+i+".predicate");
                         }
                         else
                             ProjVariable.put(predicatetemp,"T"+i+".predicate");
@@ -336,7 +336,7 @@ public class QueryProcessingAlgorithm {
                     }
                     if(objecttemp.equals(Projection.get(x))){
                         if(ProjVariable.containsKey(objecttemp)){
-                        ProjVariable.replace(objecttemp,"T"+i+"object");
+                        ProjVariable.put(objecttemp,"T"+i+"object");
                         }
                         else
                             ProjVariable.put(objecttemp,"T"+i+".object");
