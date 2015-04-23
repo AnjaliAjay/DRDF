@@ -15,7 +15,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 import org.postgresql.copy.CopyManager;
@@ -37,12 +36,29 @@ public class LubmQuery7CopyManager {
   private static final String query2Template = "SELECT T2.tripleid triple1,T1.subject as course,T2.subject as student from rdfhashedbysubject T1,rdfhashedbyobject T2,rdfhashedbyobject T3 where T1.subject=T2.object and T2.object=T3.object"
       + " and T1.predicate='rdf:type' and T1.object='<ub:Course>' and T2.predicate='ub:takesCourse' and T3.subject='<http://www.Department0.University0.edu/AssociateProfessor0>' and T3.predicate='ub:teacherOf' and abs(T2.tripleid %% %d) = %d";
 
+  private static final String query3Template = "SELECT Y.student, Y.course from X,Y where X.tripleid = Y.tripleid";
+
   public static void main(String args[]) throws Exception {
     LubmQuery7CopyManager app = new LubmQuery7CopyManager();
     
     CmdLineParser parser = new CmdLineParser(app);
     parser.parseArgument(args);
     app.run();
+  }
+
+  private LubmQuery7CopyManager() {
+    try {
+      Class.forName("org.postgresql.Driver");
+    } catch (ClassNotFoundException e) {
+      throw new AssertionError(e);
+    }
+  }
+
+  public LubmQuery7CopyManager(String mydb, int myid, String[] destinations) {
+    this();
+    this.mydb = mydb;
+    this.myid = myid;
+    this.destinations = destinations;
   }
 
   public void createTables(String[] destinations)

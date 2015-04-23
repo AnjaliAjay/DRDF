@@ -12,7 +12,6 @@ import org.mockito.Mockito;
 public class MasterImplTest {
 
 
-  @Test
   public void testInsert() throws Exception {
     Slave slaveMock = Mockito.mock(Slave.class);
     MasterImpl testObj = new MasterImpl(slaveMock);
@@ -22,8 +21,7 @@ public class MasterImplTest {
     Mockito.verify(slaveMock).insertTripleDistributedBySubject(triple);
     Mockito.verify(slaveMock).insertTripleDistributedByObject(triple);
   }
-  
-  @Test
+
   public void testInsert2() throws Exception {
     
     Slave slaveMock1 = Mockito.mock(Slave.class);
