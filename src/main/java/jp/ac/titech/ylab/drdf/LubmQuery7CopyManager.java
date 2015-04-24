@@ -21,14 +21,20 @@ import org.postgresql.copy.CopyManager;
 import org.postgresql.core.BaseConnection;
 
 public class LubmQuery7CopyManager {
-  @Option(name="-m", required=true, usage="mydb connection")
-  private String mydb;
+  @Option(name="-dataset", required=true, usage="dataset")
+  private String dataset;
 
   @Option(name="-i", required=true, usage="my server id number")
   private int myid;
 
-  @Option(name="-d", required=true, usage="list of destinations")
-  private String[] destinations;
+  @Option(name="-servers", required=true, usage="list of servers")
+  private String[] destinations = new String[] {
+          "jdbc:postgresql://192.168.172.174:5432/",
+          "jdbc:postgresql://192.168.172.175:5432/",
+          "jdbc:postgresql://192.168.172.176:5432/",
+          "jdbc:postgresql://192.168.172.177:5432/"
+  };
+
 
   private static final String query1Template = "SELECT T2.tripleid triple1 from rdfhashedbysubject T1,rdfhashedbysubject T2 where T1.subject=T2.subject and T1.predicate='rdf:type' and T1.object='<ub:UndergraduateStudent>' and T2.predicate="
       + " 'ub:takesCourse' and abs(T2.tripleid %% %d) = %d";
@@ -54,52 +60,63 @@ public class LubmQuery7CopyManager {
     }
   }
 
-  public LubmQuery7CopyManager(String mydb, int myid, String[] destinations) {
+  public LubmQuery7CopyManager(String dataset, int myid) {
     this();
-    this.mydb = mydb;
+    this.dataset = dataset;
     this.myid = myid;
-    this.destinations = destinations;
   }
 
-  public void createTables(String[] destinations)
+  /**
+   * connection for the local database. ex. "jdbc:postgresql://localhost/server?_lumb50"
+   * @param id
+   * @param dataset
+   * @return
+   */
+  private String createDBName(int id, String dataset) {
+    return destinations[id] + String.format("server%d_%s", id + 1, dataset);
+  }
+
+  public void createTables()
       throws Exception {
-    for (String dest : destinations) {
-      try (Connection conn = DriverManager.getConnection(dest + "test1", "postgres", "root")) {
+    for (int i = 0; i < destinations.length; i++) {
+      try (Connection conn = DriverManager.getConnection(createDBName(i, dataset), "postgres", "root")) {
         Statement stmt = conn.createStatement();
         stmt.execute("create table if not exists test1(tripleid integer);");
       }
-      try (Connection conn = DriverManager.getConnection(dest + "test2", "postgres", "root")) {
+      try (Connection conn = DriverManager.getConnection(createDBName(i, dataset), "postgres", "root")) {
         Statement stmt = conn.createStatement();
         stmt.execute("create table if not exists test2(tripleid integer,course varchar(100),student varchar(100));");
       }
     }
   }
 
-  public void dropTables(String[] destinations) throws Exception {
-    for (String dest : destinations) {
-      try (Connection conn = DriverManager.getConnection(dest + "test1", "postgres", "root")) {
+  public void dropTables() throws Exception {
+    for (int i = 0; i < destinations.length; i++) {
+      try (Connection conn = DriverManager.getConnection(createDBName(i, dataset), "postgres", "root")) {
         Statement stmt = conn.createStatement();
         stmt.execute("drop table if exists test1;");
       }
-      try (Connection conn = DriverManager.getConnection(dest + "test2", "postgres", "root")) {
+      try (Connection conn = DriverManager.getConnection(createDBName(i, dataset), "postgres", "root")) {
         Statement stmt = conn.createStatement();
         stmt.execute("drop table if exists test2;");
       }
     }
   }
   
-  public void run() throws Exception {
+  public String run() throws Exception {
+    StringBuilder logBuf = new StringBuilder();
     if (myid == 0) {
-      createTables(destinations);
+      createTables();
     }
     
     List<Runnable> taskQueue = new ArrayList<Runnable>();
-    buildExecutionPlan(mydb, myid, destinations, taskQueue);
+    buildExecutionPlan(dataset, myid, destinations, taskQueue, logBuf);
     
     ExecutorService executor = null;
     try {
       executor = Executors.newFixedThreadPool(destinations.length * 2);
       execute(executor, taskQueue);
+      return logBuf.toString();
     } finally {    
       executor.shutdown();
     }
@@ -107,43 +124,41 @@ public class LubmQuery7CopyManager {
   
   /**
    * 
-   * @param mydb connection for the local database. ex. "jdbc:postgresql://localhost/server?_lumb50"
+   * @param dataset dataset name
    * @param destinations servers ex. ["jdbc:postgresql://192.168.172.174:5432/", ...]
    * @param taskQueue
    * @throws Exception
    */
-  private void buildExecutionPlan(String mydb, int myid, String[] destinations, List<Runnable> taskQueue) throws Exception {
-    Connection srcCon = DriverManager.getConnection(mydb, "postgres", "root");
+  private void buildExecutionPlan(String dataset, int myid, String[] destinations, List<Runnable> taskQueue, StringBuilder logBuf) throws Exception {
+    Connection srcCon = DriverManager.getConnection(createDBName(myid, dataset), "postgres", "root");
     int numberOfServers = destinations.length;
     // Query1 -> Test1
     for (int i = 0; i<destinations.length; i++) {
-      String dest = destinations[i];
       String tableName = "test1";
-      Connection destCon = DriverManager.getConnection(dest + tableName, "postgres", "root");
+      Connection destCon = DriverManager.getConnection(createDBName(i, dataset), "postgres", "root");
       int destID = (myid + i) % numberOfServers;
-      submitCopyTask(srcCon, destCon, String.format(query1Template, numberOfServers, destID), tableName, taskQueue);
+      submitCopyTask(srcCon, destCon, String.format(query1Template, numberOfServers, destID), tableName, taskQueue, logBuf);
     }
     
     // Query2 -> Test2
     for (int i = 0; i<destinations.length; i++) {
-      String dest = destinations[i];
       String tableName = "test2";
-      Connection destCon = DriverManager.getConnection(dest + tableName, "postgres", "root");
+      Connection destCon = DriverManager.getConnection(createDBName(i, dataset), "postgres", "root");
       int destID = (myid + i) % numberOfServers;
-      submitCopyTask(srcCon, destCon, String.format(query2Template, numberOfServers, destID), tableName, taskQueue);
+      submitCopyTask(srcCon, destCon, String.format(query2Template, numberOfServers, destID), tableName, taskQueue, logBuf);
     }
   }
   
   
-  private void submitCopyTask(Connection srcCon, Connection destCon, String query, String tableName, List<Runnable> taskQueue) throws Exception {
+  private void submitCopyTask(Connection srcCon, Connection destCon, String query, String tableName, List<Runnable> taskQueue, StringBuilder logBuf) throws Exception {
     PipedWriter writer = new PipedWriter();
-    PipedReader reader = new PipedReader(writer);
+    PipedReader reader = new PipedReader(writer, 4096);
 
     CopyManager copySrcManager = new CopyManager((BaseConnection) srcCon);
     CopyManager copyDestManager = new CopyManager((BaseConnection) destCon);
 
-    Runnable copyFromTask = createDBReader(query, copySrcManager, writer);
-    Runnable copyToTask = createDBWriter(tableName, copyDestManager, reader);
+    Runnable copyFromTask = createDBReader(query, copySrcManager, writer, logBuf);
+    Runnable copyToTask = createDBWriter(tableName, copyDestManager, reader, logBuf);
 
     taskQueue.add(copyFromTask);
     taskQueue.add(copyToTask);
@@ -162,17 +177,20 @@ public class LubmQuery7CopyManager {
     }
 
     long stopTime = System.currentTimeMillis();
-    System.out.println("Elapsed time of third mnachine was " + (stopTime - startTime)
+    System.out.println("Elapsed time of third machine was " + (stopTime - startTime)
         + " miliseconds.");
   }
 
-  public Runnable createDBReader(final String sql, final CopyManager cm, final Writer writer) {
+  public Runnable createDBReader(final String sql, final CopyManager cm, final Writer writer, final StringBuilder logBuf) {
     return new Runnable() {
       @Override
       public void run() {
         try {
-          cm.copyOut(String.format("COPY ( %s ) to STDOUT WITH (FORMAT csv)", sql), writer);
+          long startTime = System.nanoTime();
+          cm.copyOut(String.format("COPY ( %s ) to STDOUT WITH (FORMAT text)", sql), writer);
           writer.close();
+          long endTime = System.nanoTime();
+          logBuf.append(String.format("copyTo task takes %d ns.\n", endTime - startTime));
           System.out.println("finish copy to side" + sql);
         } catch (SQLException e) {
           // TODO Auto-generated catch block
@@ -187,14 +205,17 @@ public class LubmQuery7CopyManager {
 
   }
 
-  public Runnable createDBWriter(final String tableName, final CopyManager cm, final Reader reader) {
+  public Runnable createDBWriter(final String tableName, final CopyManager cm, final Reader reader, final StringBuilder logBuf) {
     return new Runnable() {
       @Override
       public void run() {
         // TODO Auto-generated method stub
         try {
-          cm.copyIn(String.format("COPY %s from STDIN WITH (FORMAT csv)", tableName), reader);
+          long startTime = System.nanoTime();
+          cm.copyIn(String.format("COPY %s from STDIN WITH (FORMAT text)", tableName), reader);
           reader.close();
+          long endTime = System.nanoTime();
+          logBuf.append(String.format("Copy from %s task takes %d ns.\n", tableName, endTime - startTime));
           System.out.println("finish copy from side");
         } catch (SQLException | IOException e) {
           // TODO Auto-generated catch block

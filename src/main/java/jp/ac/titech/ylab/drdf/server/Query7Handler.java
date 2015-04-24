@@ -14,15 +14,7 @@ import java.io.IOException;
  */
 public class Query7Handler extends AbstractHandler {
 
-    private String mydb = "%sserver%d_%s";
     private int myid;
-
-    private String[] destinations = new String[] {
-            "jdbc:postgresql://192.168.172.174:5432/",
-            "jdbc:postgresql://192.168.172.175:5432/",
-            "jdbc:postgresql://192.168.172.176:5432/",
-            "jdbc:postgresql://192.168.172.177:5432/"
-    };
 
     public Query7Handler(int myid) {
         this.myid = myid;
@@ -31,7 +23,7 @@ public class Query7Handler extends AbstractHandler {
     @Override
     public void handle(String s, Request request, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws IOException, ServletException {
 
-        if ("/drop".equals(s)) {
+        if (s.startsWith("/drop/")) {
             dropTables(s, request, httpServletResponse);
         } else {
             runQuery(s, request, httpServletResponse);
@@ -39,9 +31,10 @@ public class Query7Handler extends AbstractHandler {
     }
 
     private void dropTables(String s, Request request, HttpServletResponse httpServletResponse) throws IOException {
-        LubmQuery7CopyManager query7 = new LubmQuery7CopyManager(String.format(mydb, destinations[myid],myid+1, "lumb50"), myid, destinations);
+        String dataset = s.substring(6);
+        LubmQuery7CopyManager query7 = new LubmQuery7CopyManager(dataset, myid);
         try {
-            query7.dropTables(destinations);
+            query7.dropTables();
             httpServletResponse.setStatus(HttpServletResponse.SC_ACCEPTED);
             httpServletResponse.setContentType("text/plain");
             httpServletResponse.getWriter().append("tables have been dropped.");
@@ -49,22 +42,28 @@ public class Query7Handler extends AbstractHandler {
             httpServletResponse.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             httpServletResponse.setContentType("text/plain");
             httpServletResponse.getWriter().append(e.getMessage());
+            e.printStackTrace();
         }
         request.setHandled(true);
     }
 
     private void runQuery(String s, Request request, HttpServletResponse httpServletResponse) throws IOException {
         String dataset = s.substring(1);
-        LubmQuery7CopyManager query7 = new LubmQuery7CopyManager(String.format(mydb, destinations[myid],myid+1, dataset), myid, destinations);
+        LubmQuery7CopyManager query7 = new LubmQuery7CopyManager(dataset, myid);
 
         try {
-            query7.run();
+            long startTime = System.nanoTime();
+            String logBuf = query7.run();
+            long endTime = System.nanoTime();
+
             httpServletResponse.setStatus(HttpServletResponse.SC_ACCEPTED);
             httpServletResponse.setContentType("text/plain");
+            httpServletResponse.getWriter().append(String.format("execution time: %d ns\n", endTime - startTime)).append(logBuf);
         } catch (Exception e) {
             httpServletResponse.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             httpServletResponse.setContentType("text/plain");
             httpServletResponse.getWriter().append(e.getMessage());
+            e.printStackTrace();
         }
         request.setHandled(true);
     }
