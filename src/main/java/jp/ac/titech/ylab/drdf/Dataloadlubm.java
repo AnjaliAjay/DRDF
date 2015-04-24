@@ -140,25 +140,6 @@ public class Dataloadlubm
                 predicate = predicateandobj.substring(1,k1-1);
                 String ob = predicateandobj.substring(k1+1);
                 object = ob.substring(0,ob.length()-2);
-                
-                MessageDigest mdObject = MessageDigest.getInstance("MD5");
-                mdObject.update(object.getBytes());
-                byte[] objectDigest = mdObject.digest();    
-                long hObject = 0;
-                for (int i = 0; i < 4; i++) 
-                {
-                        hObject <<= 8;
-                        hObject |= ((int) objectDigest[i]) & 0xFF;
-                }
-                MessageDigest mdSubject = MessageDigest.getInstance("MD5");
-                mdSubject.update(subject.getBytes());
-                byte[] subjectDigest = mdSubject.digest();    
-                long hSubject = 0;
-                for (int i = 0; i < 4; i++) 
-                {
-                        hSubject <<= 8;
-                        hSubject |= ((int) subjectDigest[i]) & 0xFF;
-                }
                 tripleVal=tripleVal+1;
                 for(Map.Entry<String, String> hEntry : hmap.entrySet()){
                   String prefixKey=hEntry.getKey().toString();
@@ -179,6 +160,24 @@ public class Dataloadlubm
                          
                       }
                   }
+                MessageDigest mdObject = MessageDigest.getInstance("MD5");
+                mdObject.update(object.getBytes());
+                byte[] objectDigest = mdObject.digest();    
+                long hObject = 0;
+                for (int i = 0; i < 4; i++) 
+                {
+                        hObject <<= 8;
+                        hObject |= ((int) objectDigest[i]) & 0xFF;
+                }
+                MessageDigest mdSubject = MessageDigest.getInstance("MD5");
+                mdSubject.update(subject.getBytes());
+                byte[] subjectDigest = mdSubject.digest();    
+                long hSubject = 0;
+                for (int i = 0; i < 4; i++) 
+                {
+                        hSubject <<= 8;
+                        hSubject |= ((int) subjectDigest[i]) & 0xFF;
+                }
                 distribute(word,hObject,hSubject,subject,predicate,object,stat1,stat2,stat3,stat4,tripleVal);
                 
                 
