@@ -36,8 +36,13 @@ public class LubmQuery7CopyManager {
   };
 
 
-  private static final String query1Template = "SELECT T2.tripleid triple1 from rdfhashedbysubject T1,rdfhashedbysubject T2 where T1.subject=T2.subject and T1.predicate='rdf:type' and T1.object='<ub:UndergraduateStudent>' and T2.predicate="
-      + " 'ub:takesCourse' and abs(T2.tripleid %% %d) = %d";
+  private static final String query1Template =
+          "SELECT T2.tripleid triple1 from rdfhashedbysubject T1,rdfhashedbysubject T2 " +
+                  "where T1.subject=T2.subject " +
+                  "and T1.predicate='rdf:type' " +
+                  "and T1.object='<ub:UndergraduateStudent>' " +
+                  "and T2.predicate='ub:takesCourse' " +
+                  "and abs(T2.tripleid %% %d) = %d";
   
   private static final String query2Template = "SELECT T2.tripleid triple1,T1.subject as course,T2.subject as student from rdfhashedbysubject T1,rdfhashedbyobject T2,rdfhashedbyobject T3 where T1.subject=T2.object and T2.object=T3.object"
       + " and T1.predicate='rdf:type' and T1.object='<ub:Course>' and T2.predicate='ub:takesCourse' and T3.subject='<http://www.Department0.University0.edu/AssociateProfessor0>' and T3.predicate='ub:teacherOf' and abs(T2.tripleid %% %d) = %d";
@@ -130,11 +135,11 @@ public class LubmQuery7CopyManager {
    * @throws Exception
    */
   private void buildExecutionPlan(String dataset, int myid, String[] destinations, List<Runnable> taskQueue, StringBuilder logBuf) throws Exception {
-    Connection srcCon = DriverManager.getConnection(createDBName(myid, dataset), "postgres", "root");
-    int numberOfServers = destinations.length;
+        int numberOfServers = destinations.length;
     // Query1 -> Test1
     for (int i = 0; i<destinations.length; i++) {
       String tableName = "test1";
+      Connection srcCon = DriverManager.getConnection(createDBName(myid, dataset), "postgres", "root");
       Connection destCon = DriverManager.getConnection(createDBName(i, dataset), "postgres", "root");
       int destID = (myid + i) % numberOfServers;
       submitCopyTask(srcCon, destCon, String.format(query1Template, numberOfServers, destID), tableName, taskQueue, logBuf);
@@ -143,6 +148,7 @@ public class LubmQuery7CopyManager {
     // Query2 -> Test2
     for (int i = 0; i<destinations.length; i++) {
       String tableName = "test2";
+      Connection srcCon = DriverManager.getConnection(createDBName(myid, dataset), "postgres", "root");
       Connection destCon = DriverManager.getConnection(createDBName(i, dataset), "postgres", "root");
       int destID = (myid + i) % numberOfServers;
       submitCopyTask(srcCon, destCon, String.format(query2Template, numberOfServers, destID), tableName, taskQueue, logBuf);
