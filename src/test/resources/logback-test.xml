@@ -7,10 +7,10 @@
         </encoder>
     </appender>
 
-    <logger name="jp.ac.titech.ylab.drdf" level="debug" />
+    <logger name="jp.ac.titech.ylab.drdf" level="debug"/>
 
     <root level="debug">
-        <appender-ref ref="stdout" />
+        <appender-ref ref="stdout"/>
     </root>
 
 </configuration>

@@ -1,9 +1,9 @@
 package jp.ac.titech.ylab.drdf;
 
 public interface Master {
-  void setDistributionStrategy(DistributionStrategy strategy);
+    void setDistributionStrategy(DistributionStrategy strategy);
 
-  void insert(Triple triple);
+    void insert(Triple triple);
 
-  void query(String query);
+    void query(String query);
 }
