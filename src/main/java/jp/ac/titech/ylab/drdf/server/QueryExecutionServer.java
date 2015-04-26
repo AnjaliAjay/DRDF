@@ -5,19 +5,17 @@ import org.eclipse.jetty.server.handler.ContextHandler;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 
-import java.io.File;
-
 /**
  * Created by nishimura on 2015/04/23.
  */
 public class QueryExecutionServer {
-    @Option(name="-port", usage="port number")
+    @Option(name = "-port", usage = "port number")
     private int port = 8080;
 
-    @Option(name="-id", usage="slave id")
+    @Option(name = "-id", usage = "slave id")
     private int id = 0;
 
-    @Option(name="-server")
+    @Option(name = "-server")
     private boolean isServer = false;
 
     public static void main(String[] args) throws Exception {
