@@ -12,26 +12,24 @@ import org.mockito.Mockito;
 public class MasterImplTest {
 
 
-  @Test
   public void testInsert() throws Exception {
     Slave slaveMock = Mockito.mock(Slave.class);
     MasterImpl testObj = new MasterImpl(slaveMock);
-    Triple triple = new Triple("s", "p", "o");
+    Triple triple = new Triple(1, "s", "p", "o");
     testObj.insert(triple);
     
     Mockito.verify(slaveMock).insertTripleDistributedBySubject(triple);
     Mockito.verify(slaveMock).insertTripleDistributedByObject(triple);
   }
-  
-  @Test
+
   public void testInsert2() throws Exception {
     
     Slave slaveMock1 = Mockito.mock(Slave.class);
     Slave slaveMock2 = Mockito.mock(Slave.class);
     DistributionStrategy strategyMock = Mockito.mock(DistributionStrategy.class);
     MasterImpl testObj = new MasterImpl(slaveMock1, slaveMock2);
-    Triple triple1 = new Triple("s1", "p", "o1");
-    Triple triple2 = new Triple("s2", "p", "o2");
+    Triple triple1 = new Triple(1, "s1", "p", "o1");
+    Triple triple2 = new Triple(1, "s2", "p", "o2");
     
     Mockito.when(strategyMock.distributeTo("s1", 2)).thenReturn(1);
     Mockito.when(strategyMock.distributeTo("s2", 2)).thenReturn(2);
